@@ -19,7 +19,7 @@ db = mysql.connector.connect(
 @app.route('/')
 def home():
     if 'usuario' in session:
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('pagina_principal'))
     return redirect(url_for('login'))
 
 
@@ -39,7 +39,7 @@ def login():
 
         if user and bcrypt.check_password_hash(user['password'], contrasena):
             session['usuario'] = usuario
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('pagina_principal'))
         else:
             flash("Usuario o contraseña incorrectos")
 
@@ -50,6 +50,7 @@ def login():
 def registro():
     if request.method == 'POST':
         usuario = request.form['usuario']
+        email = request.form['email']
         contrasena = request.form['contrasena']
 
         cursor = db.cursor()
@@ -66,8 +67,8 @@ def registro():
         hashed = bcrypt.generate_password_hash(contrasena).decode('utf-8')
 
         cursor.execute(
-            "INSERT INTO users (usuario, password) VALUES (%s, %s)",
-            (usuario, hashed)
+            "INSERT INTO users (usuario, email, password) VALUES (%s, %s, %s)",
+            (usuario, email, hashed)
         )
         db.commit()
         cursor.close()
@@ -78,14 +79,26 @@ def registro():
     return render_template('register.html')
 
 
-@app.route('/dashboard')
-def dashboard():
+@app.route('/pagina_principal')
+def pagina_principal():
     if 'usuario' not in session:
         return redirect(url_for('login'))
-    return f"""
-        <h1>Bienvenido {session['usuario']}</h1>
-        <a href="/logout">Cerrar sesión</a>
-    """
+    return render_template('index.html', usuario=session['usuario'])
+
+
+@app.route('/mi_perfil')
+def mi_perfil():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+    
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM users WHERE usuario = %s", (session['usuario'],))
+    user = cursor.fetchone()
+    cursor.close()
+    
+    if user:
+        return render_template('mi_perfil.html', usuario=user['usuario'], email=user.get('email', 'No disponible'))
+    return redirect(url_for('login'))
 
 
 @app.route('/logout')
