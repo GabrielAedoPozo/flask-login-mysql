@@ -2,13 +2,15 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recuperar Contraseña</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='contrasena.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
 
-<div class="container">
-    <h1>Recuperar Contraseña</h1>
+<div class="login-container">
+    <form class="login-form" method="POST">
+        <h2>Recuperar Contraseña</h2>
 
     {% with messages = get_flashed_messages(category_filter=['success', 'error']) %}
       {% if messages %}
@@ -18,12 +20,15 @@
       {% endif %}
     {% endwith %}
 
-    <form method="POST">
-        <input type="email" name="email" placeholder="Correo electrónico" required>
-        <button type="submit">Enviar enlace</button>
-    </form>
+        <div class="form-group">
+            <input type="email" name="email" placeholder="Correo electrónico" required>
+        </div>
+        <button type="submit" class="btn">Enviar enlace</button>
 
-    <p><a href="{{ url_for('login') }}">Volver al login</a></p>
+        <div class="login-link">
+            <p><a class="login-text" href="{{ url_for('login') }}">Volver al login</a></p>
+        </div>
+    </form>
 </div>
 
 </body>

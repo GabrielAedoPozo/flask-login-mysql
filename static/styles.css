@@ -1,15 +1,21 @@
-/* Global Styles */
+/* Global Styles (Auth pages) */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
 body {
-    background-color: lightgray; /* Fondo cambiado a lightgray */
-    color: #000; /* Texto negro para mayor contraste */
+    background-color: lightgray;
+    color: #000;
     font-family: 'Roboto', sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    min-height: 100vh;
     margin: 0;
-    padding: 0 20px;
-    -webkit-font-smoothing: antialiased; /* Mejora la visualización en dispositivos Apple */
+    padding: 24px 20px;
+    -webkit-font-smoothing: antialiased;
 }
 
 /* Login Container */
@@ -24,6 +30,10 @@ body {
     border: 1px solid #000; /* Contorno negro */
     position: relative;
     transform: translateZ(0);
+}
+
+.login-form {
+    width: 100%;
 }
 
 /* Form */
@@ -52,7 +62,7 @@ body {
 
 .form-group input {
     width: 100%;
-    padding: 14px 14px 14px 45px;
+    padding: 14px;
     border: 2px solid rgba(0, 0, 0, 0.3); /* Contorno tenue */
     border-radius: 10px;
     background-color: rgba(0, 0, 0, 0.05); /* Fondo claro */
@@ -61,6 +71,11 @@ body {
     font-size: 16px;
     transition: all 0.3s ease;
     box-sizing: border-box;
+}
+
+/* If an icon is present, add left padding */
+.form-group .icon + input {
+    padding-left: 45px;
 }
 
 .form-group input:focus {
@@ -110,16 +125,19 @@ body {
     color: #000; /* Texto en negro */
 }
 
-.signup-text, .login-text {
-    color: #000; /* Links en negro */
+.signup-text, .login-text,
+.login-link a, .signup-link a {
+    color: #000;
     font-weight: bold;
     text-decoration: none;
     transition: color 0.3s ease, transform 0.3s ease;
+    display: inline-block;
 }
 
-.signup-text:hover, .login-text:hover {
-    color: #444; /* Texto más oscuro al pasar el cursor */
-    transform: scale(1.1);
+.signup-text:hover, .login-text:hover,
+.login-link a:hover, .signup-link a:hover {
+    color: #444;
+    transform: scale(1.06);
 }
 
 /* Password Toggle Icon */
@@ -177,4 +195,27 @@ body {
     background-color: rgba(255, 77, 77, 0.1);
     padding: 10px;
     border-radius: 5px;
+}
+
+/* Flash message (used by password recovery/reset) */
+.flash-message {
+    color: #0f5132;
+    font-size: 14px;
+    text-align: center;
+    margin-bottom: 15px;
+    border: 1px solid #badbcc;
+    background-color: #d1e7dd;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+@media (max-width: 480px) {
+    .login-container {
+        padding: 24px 20px;
+        border-radius: 12px;
+    }
+
+    .login-form h2 {
+        font-size: 22px;
+    }
 }
