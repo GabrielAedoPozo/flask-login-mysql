@@ -3,36 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <title>Iniciar Sesión</title>
-
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <script defer src="{{ url_for('static', filename='app.js') }}"></script>
 </head>
 <body>
 
 <div class="login-container">
-    <form class="login-form" action="{{ url_for('login') }}" method="POST">
+    <form class="login-form" method="POST">
         <h2>Iniciar Sesión</h2>
 
         {% with messages = get_flashed_messages() %}
           {% if messages %}
-            <div class="error-message">
-              {{ messages[0] }}
-            </div>
+            <div class="error-message">{{ messages[0] }}</div>
           {% endif %}
         {% endwith %}
 
-        <div class="form-group">
-            <input type="text" name="usuario" placeholder="Usuario" required>
-        </div>
+        <input type="text" name="usuario" placeholder="Usuario" required>
+        <input type="password" name="contrasena" placeholder="Contraseña" required>
 
-        <div class="form-group">
-            <input type="password" name="contrasena" placeholder="Contraseña" required>
-        </div>
+        <button type="submit">Entrar</button>
 
-        <button type="submit" class="btn">Entrar</button>
-        <div class="signup-link">
-            <p>¿No tienes cuenta? <a href="{{ url_for('registro') }}" class="signup-text">Crear cuenta</a></p>
-        </div>
+        <p><a href="{{ url_for('recuperar_contrasena') }}">¿Olvidaste tu contraseña?</a></p>
+
+        <p><a href="{{ url_for('registro') }}">Crear cuenta</a></p>
     </form>
 </div>
 
