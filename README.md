@@ -8,24 +8,26 @@ Este proyecto es una **adaptación y mejora de un proyecto base originalmente im
 
 ##  Características
 
-* Registro de usuarios
-* Inicio de sesión (login)
-* Cierre de sesión (logout)
-* Contraseñas **hasheadas** con `flask-bcrypt`
-* Manejo de sesiones con Flask
-* Base de datos MySQL
-* Arquitectura clara (`templates` / `static`)
+- Registro de usuarios
+- Inicio de sesión (login)
+- Cierre de sesión (logout)
+- Recuperación de contraseña vía email usando `email.message`
+- Contraseñas **hasheadas** con `Flask-Bcrypt`
+- Manejo de sesiones con Flask
+- Base de datos MySQL
+- Arquitectura clara (`templates` / `static`)
 
 ---
 
 ## 🛠️ Tecnologías usadas
 
-* **Python 3**
-* **Flask**
-* **MySQL**
-* **mysql-connector-python**
-* **Flask-Bcrypt**
-* HTML5 / CSS3
+- **Python 3**
+- **Flask**
+- **MySQL**
+- **mysql-connector-python**
+- **Flask-Bcrypt**
+- **email.message** (para envío de correos)
+- HTML5 / CSS3
 
 ---
 
