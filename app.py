@@ -177,6 +177,23 @@ def pagina_principal():
         return redirect(url_for('login'))
     return render_template('index.html', usuario=session['usuario'])
 
+# ---------------- PERFIL ----------------
+@app.route('/mi_perfil')
+def mi_perfil():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    cursor = db.cursor(dictionary=True)
+    cursor.execute(
+        "SELECT email FROM users_new WHERE usuario=%s",
+        (session['usuario'],)
+    )
+    row = cursor.fetchone()
+    cursor.close()
+
+    email = row['email'] if row else ''
+    return render_template('mi_perfil.html', usuario=session['usuario'], email=email)
+
 # ---------------- LOGOUT ----------------
 @app.route('/logout')
 def logout():
