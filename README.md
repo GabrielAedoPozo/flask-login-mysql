@@ -74,7 +74,7 @@ CREATE DATABASE login_db;
 
 USE login_db;
 
-CREATE TABLE usuarios (
+CREATE TABLE users_new (
     id INT AUTO_INCREMENT PRIMARY KEY,
     usuario VARCHAR(100) NOT NULL UNIQUE,
     email VARCHAR(150) NOT NULL UNIQUE,
@@ -112,7 +112,6 @@ http://127.0.0.1:5000
 
 🔜 Posibles mejoras futuras:
 
-* Recuperación de contraseña por email
 * Roles de usuario
 * Validaciones avanzadas
 * Deploy en producción
