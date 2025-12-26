@@ -1,80 +1,100 @@
 # 🔐 Login System con Flask y MySQL
 
-Proyecto de **sistema de autenticación** (registro, login y sesiones) desarrollado con **Flask** y **MySQL**, enfocado en buenas prácticas de backend, seguridad básica y estructura profesional para portafolio.
+Sistema de **autenticación** (registro, login, logout y sesiones) desarrollado con **Flask** y **MySQL**, enfocado en una estructura simple para portafolio.
 
-Este proyecto es una **adaptación y mejora de un proyecto base originalmente implementado con MongoDB**, el cual fue **modificado completamente para utilizar MySQL**, manteniendo la lógica de autenticación pero cambiando la capa de persistencia de datos.
+Este proyecto es una adaptación de una versión previa con MongoDB, migrado para usar **MySQL** como persistencia.
 
 ---
 
-##  Características
+## Características
 
 - Registro de usuarios
 - Inicio de sesión (login)
 - Cierre de sesión (logout)
-- Recuperación de contraseña vía email usando `email.message`
-- Contraseñas **hasheadas** con `Flask-Bcrypt`
+- Hash de contraseñas con `Flask-Bcrypt`
 - Manejo de sesiones con Flask
-- Base de datos MySQL
-- Arquitectura clara (`templates` / `static`)
+- Base de datos MySQL (driver `mysql-connector-python`)
+- Vistas con `templates/` y assets en `static/`
 
 ---
 
-## 🛠️ Tecnologías usadas
+## Requisitos
 
-- **Python 3**
-- **Flask**
-- **MySQL**
-- **mysql-connector-python**
-- **Flask-Bcrypt**
-- **email.message** (para envío de correos)
-- HTML5 / CSS3
+- Python 3.10+ (recomendado)
+- MySQL Server 8.x
+- Pip
 
 ---
 
 ## 📁 Estructura del proyecto
 
 ```
-flask-login-mysql/
-│
+.
 ├── app.py
 ├── requirements.txt
-├── .gitignore
-│
+├── README.md
 ├── templates/
+│   ├── index.html
 │   ├── login.html
+│   ├── mi_perfil.html
+│   ├── recuperar_contrasena.html
 │   ├── register.html
-│   └── index.html
-│
+│   └── restablecer_contrasena.html
 └── static/
-    ├── styles.css
-    └── app.js
+    ├── app.js
+    ├── contrasena.css
+    ├── index.css
+    ├── perfil.css
+    ├── restablecer.css
+    └── styles.css
 ```
 
 ---
 
-## ⚙️ Instalación y configuración
+## ⚙️ Instalación
 
-### 1️ Clonar el repositorio
+### 1) Clonar el repo
 
 ```bash
 git clone https://github.com/GabrielAedoPozo/flask-login-mysql.git
 cd flask-login-mysql
 ```
 
-### 2️ Instalar dependencias
+### 2) Crear y activar entorno virtual
+
+**Windows (PowerShell):**
+```bash
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+**macOS / Linux:**
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+### 3) Instalar dependencias
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3️ Crear la base de datos en MySQL
+---
+
+## 🗄️ MySQL: creación de BD y tabla
+
+1) Asegúrate de tener MySQL corriendo.
+2) Crea la base de datos y tabla:
 
 ```sql
-CREATE DATABASE login_db;
+CREATE DATABASE IF NOT EXISTS login_db
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
 
 USE login_db;
 
-CREATE TABLE usuarios (
+CREATE TABLE IF NOT EXISTS usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     usuario VARCHAR(100) NOT NULL UNIQUE,
     email VARCHAR(150) NOT NULL UNIQUE,
@@ -82,54 +102,35 @@ CREATE TABLE usuarios (
 );
 ```
 
+### Configuración de conexión
+Configura las credenciales de MySQL en el archivo [`app.py`](app.py) (host, usuario, contraseña y base de datos) para que coincidan con tu instalación local.
+
+> Nota: Este proyecto usa el driver **mysql-connector-python** (incluido en [`requirements.txt`](requirements.txt)).
+
 ---
 
-##  Ejecutar el proyecto
+## ▶️ Ejecutar el proyecto
+
+Con el entorno virtual activado:
 
 ```bash
 py app.py
 ```
 
-Luego abre en tu navegador:
+Luego abre:
 
-```
-http://127.0.0.1:5000
-```
+- http://127.0.0.1:5000
 
 ---
 
-## 🔐 Seguridad
+## 🔐 Seguridad (básica)
 
-* Las contraseñas **NO se guardan en texto plano**
-* Se usa hash seguro con `bcrypt`
-* Uso de sesiones para proteger rutas
-
----
-
-##  Estado del proyecto
-
-✅ Funcional
-
-🔜 Posibles mejoras futuras:
-
-* Recuperación de contraseña por email
-* Roles de usuario
-* Validaciones avanzadas
-* Deploy en producción
+- Las contraseñas no se guardan en texto plano (hash con bcrypt)
+- Sesiones para proteger rutas
 
 ---
 
-## 🔄 Adaptación del proyecto
+## Estado
 
-* Proyecto base originalmente desarrollado con **MongoDB**
-* Migración completa a **MySQL** usando `mysql-connector
-
-**Gabriel Aedo Pozo**
-Desarrollador web en formación, enfocado en backend y fullstack.
-
-* GitHub: [https://github.com/GabrielAedoPozo](https://github.com/GabrielAedoPozo)
-
----
-
-⭐ Si te gusta el proyecto, ¡dale una estrella!
-⭐ Proximas Actualizaciones!!!!!!
+✅ Funcional  
+🔜 Mejoras posibles:validaciones, roles, deploy
