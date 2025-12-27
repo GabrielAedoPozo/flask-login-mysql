@@ -133,4 +133,4 @@ Luego abre:
 ## Estado
 
 ✅ Funcional  
-🔜 Mejoras posibles:validaciones, roles, deploy
+🔜 Mejoras posibles: validaciones, roles, deploy
