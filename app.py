@@ -38,12 +38,12 @@ Este enlace expira en 30 minutos.
         with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as smtp:
             smtp.login(
                 "aedothegabriel@gmail.com",
-                "qqvy xlfq qdyv twik"  # app password con espacios
+                "*** *** ***"  # app password con espacios, contraseña de aplicacion.
             )
             smtp.send_message(msg)
 
     except Exception as e:
-        print("❌ ERROR AL ENVIAR EMAIL:", e)
+        print("ERROR AL ENVIAR EMAIL:", e)
 
 
 
