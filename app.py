@@ -12,27 +12,35 @@ from google.auth.transport import requests as google_requests
 
 load_dotenv()
 
-# Configurar Client ID de Google OAuth (debe estar en .env)
+# Configurar variables de entorno
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
-
+app_secret = os.getenv("SECRET_KEY")
+if not app_secret:
+    raise ValueError("❌ ERROR: SECRET_KEY no está configurada en .env")
 
 app = Flask(__name__)
-app.secret_key = "clave_secreta_super_simple"
+app.secret_key = app_secret
 bcrypt = Bcrypt(app)
 
 # ---------------- CONEXIÓN MYSQL ----------------
 db = mysql.connector.connect(
-    host="localhost",
-    user="flaskuser",
-    password="flaskpass123",
-    database="login_db"
+    host=os.getenv("DB_HOST", "localhost"),
+    user=os.getenv("DB_USER"),
+    password=os.getenv("DB_PASSWORD"),
+    database=os.getenv("DB_NAME", "login_db")
 )
 
 def send_email(to_email, link):
     try:
+        sender_email = os.getenv("EMAIL_SENDER")
+        email_password = os.getenv("EMAIL_PASSWORD")
+        
+        if not sender_email or not email_password:
+            raise ValueError("Credenciales de email no configuradas en .env")
+        
         msg = EmailMessage()
         msg["Subject"] = "Restablecer contraseña"
-        msg["From"] = "aedothegabriel@gmail.com"
+        msg["From"] = sender_email
         msg["To"] = to_email
         msg.set_content(f"""
 Hola,
@@ -46,10 +54,7 @@ Este enlace expira en 30 minutos.
 """)
 
         with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as smtp:
-            smtp.login(
-                "aedothegabriel@gmail.com",
-                "*** *** ***"  # app password con espacios, contraseña de aplicacion.
-            )
+            smtp.login(sender_email, email_password)
             smtp.send_message(msg)
 
     except Exception as e:
@@ -142,7 +147,8 @@ def recuperar_contrasena():
 
         cursor.close()
 
-        link = f"http://localhost:5000/restablecer-contrasena/{token}"
+        app_host = os.getenv("APP_HOST", "http://localhost:5000")
+        link = f"{app_host}/restablecer-contrasena/{token}"
         send_email(email, link)
 
         flash("Revisa tu correo")
@@ -382,4 +388,5 @@ def auth_google_register():
 
 # ---------------- RUN ----------------
 if __name__ == '__main__':
-    app.run(debug=True)
+    debug_mode = os.getenv("FLASK_ENV", "production") == "development"
+    app.run(debug=debug_mode)
