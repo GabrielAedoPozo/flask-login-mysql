@@ -1,10 +1,20 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_bcrypt import Bcrypt
 import mysql.connector
 import uuid
 from datetime import datetime, timedelta
 import smtplib
 from email.message import EmailMessage
+import os
+from dotenv import load_dotenv
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+
+load_dotenv()
+
+# Configurar Client ID de Google OAuth (debe estar en .env)
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+
 
 app = Flask(__name__)
 app.secret_key = "clave_secreta_super_simple"
@@ -43,7 +53,7 @@ Este enlace expira en 30 minutos.
             smtp.send_message(msg)
 
     except Exception as e:
-        print("❌ ERROR AL ENVIAR EMAIL:", e)
+        print(" ERROR AL ENVIAR EMAIL:", e)
 
 
 
@@ -73,7 +83,8 @@ def login():
         else:
             flash("Usuario o contraseña incorrectos")
 
-    return render_template('login.html')
+    # Pasar GOOGLE_CLIENT_ID al template
+    return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
 
 # ---------------- REGISTRO ----------------
 @app.route('/registro', methods=['GET', 'POST'])
@@ -106,7 +117,8 @@ def registro():
         flash("Cuenta creada correctamente")
         return redirect(url_for('login'))
 
-    return render_template('register.html')
+    # Pasar GOOGLE_CLIENT_ID al template
+    return render_template('register.html', google_client_id=GOOGLE_CLIENT_ID)
 
 # ---------------- RECUPERAR CONTRASEÑA ----------------
 @app.route('/recuperar-contrasena', methods=['GET', 'POST'])
@@ -199,6 +211,174 @@ def mi_perfil():
 def logout():
     session.clear()
     return redirect(url_for('login'))
+
+# ---------------- GOOGLE OAUTH 2.0 ----------------
+@app.route('/auth/google', methods=['POST'])
+def auth_google():
+    """
+    Endpoint para autenticación (LOGIN) con Google OAuth 2.0
+    Recibe idToken desde el frontend y valida el usuario
+    Solo crea sesión si el usuario YA EXISTE
+    """
+    try:
+        # Obtener el token desde el body de la petición
+        data = request.get_json()
+        token = data.get('idToken')
+        
+        if not token:
+            return jsonify({'error': 'Token no proporcionado'}), 400
+        
+        # Validar el token con Google
+        idinfo = id_token.verify_oauth2_token(
+            token, 
+            google_requests.Request(), 
+            GOOGLE_CLIENT_ID
+        )
+        
+        # Verificar que el token es válido para nuestra app
+        if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
+            return jsonify({'error': 'Token inválido'}), 401
+        
+        # Extraer información del usuario
+        email = idinfo.get('email')
+        name = idinfo.get('name')
+        picture = idinfo.get('picture')
+        google_id = idinfo.get('sub')  # ID único de Google
+        
+        if not email:
+            return jsonify({'error': 'Email no disponible'}), 400
+        
+        cursor = db.cursor(dictionary=True)
+        
+        # Buscar usuario por email
+        cursor.execute(
+            "SELECT * FROM users_new WHERE email=%s",
+            (email,)
+        )
+        user = cursor.fetchone()
+        
+        if user:
+            # Usuario existe - actualizar google_id si no lo tiene
+            if not user.get('google_id'):
+                cursor.execute(
+                    "UPDATE users_new SET google_id=%s, picture=%s, auth_provider='google' WHERE id=%s",
+                    (google_id, picture, user['id'])
+                )
+                db.commit()
+            
+            # Crear sesión Flask
+            session['usuario'] = user['usuario']
+            cursor.close()
+            
+            return jsonify({
+                'success': True,
+                'message': 'Login exitoso',
+                'usuario': user['usuario']
+            }), 200
+        
+        else:
+            # Usuario NO existe - no permitir login, debe registrarse
+            cursor.close()
+            return jsonify({
+                'success': False,
+                'error': 'Usuario no existe. Por favor regístrate primero.'
+            }), 404
+    
+    except ValueError as e:
+        # Token inválido o expirado
+        return jsonify({'error': f'Token inválido: {str(e)}'}), 401
+    
+    except Exception as e:
+        # Error general
+        print("❌ ERROR EN GOOGLE LOGIN:", e)
+        return jsonify({'error': 'Error en la autenticación'}), 500
+
+
+@app.route('/auth/google/register', methods=['POST'])
+def auth_google_register():
+    """
+    Endpoint para REGISTRO con Google OAuth 2.0
+    Recibe idToken, valida y crea nuevo usuario si no existe
+    """
+    try:
+        # Obtener el token desde el body de la petición
+        data = request.get_json()
+        token = data.get('idToken')
+        
+        if not token:
+            return jsonify({'error': 'Token no proporcionado'}), 400
+        
+        # Validar el token con Google
+        idinfo = id_token.verify_oauth2_token(
+            token, 
+            google_requests.Request(), 
+            GOOGLE_CLIENT_ID
+        )
+        
+        # Verificar que el token es válido para nuestra app
+        if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
+            return jsonify({'error': 'Token inválido'}), 401
+        
+        # Extraer información del usuario
+        email = idinfo.get('email')
+        name = idinfo.get('name')
+        picture = idinfo.get('picture')
+        google_id = idinfo.get('sub')  # ID único de Google
+        
+        if not email or not name:
+            return jsonify({'error': 'Email o nombre no disponibles'}), 400
+        
+        cursor = db.cursor(dictionary=True)
+        
+        # Buscar si el usuario ya existe
+        cursor.execute(
+            "SELECT * FROM users_new WHERE email=%s",
+            (email,)
+        )
+        user = cursor.fetchone()
+        
+        if user:
+            # El email ya existe
+            cursor.close()
+            return jsonify({
+                'success': False,
+                'error': 'Este correo electrónico ya está registrado'
+            }), 409
+        
+        # Crear nuevo usuario con Google OAuth
+        try:
+            cursor.execute(
+                """INSERT INTO users_new 
+                   (usuario, email, google_id, picture, password, auth_provider) 
+                   VALUES (%s, %s, %s, %s, NULL, 'google')""",
+                (name, email, google_id, picture)
+            )
+            db.commit()
+            
+            # Crear sesión Flask
+            session['usuario'] = name
+            cursor.close()
+            
+            return jsonify({
+                'success': True,
+                'message': 'Usuario registrado y login exitoso',
+                'usuario': name
+            }), 201
+        
+        except mysql.connector.Error as db_error:
+            db.rollback()
+            cursor.close()
+            print("❌ ERROR EN BASE DE DATOS:", db_error)
+            return jsonify({'error': 'Error al registrar usuario'}), 500
+    
+    except ValueError as e:
+        # Token inválido o expirado
+        return jsonify({'error': f'Token inválido: {str(e)}'}), 401
+    
+    except Exception as e:
+        # Error general
+        print("❌ ERROR EN GOOGLE REGISTER:", e)
+        return jsonify({'error': 'Error en el registro'}), 500
 
 # ---------------- RUN ----------------
 if __name__ == '__main__':

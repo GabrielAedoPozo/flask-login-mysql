@@ -8,6 +8,9 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <script defer src="{{ url_for('static', filename='app.js') }}"></script>
+    
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>  
     <div class="login-container">
@@ -42,11 +45,90 @@
             
             <button type="submit" class="btn">Registrarse</button>
 
+            <!-- Separador -->
+            <div style="text-align: center; margin: 20px 0; color: #666;">
+              <span>o</span>
+            </div>
+
+            <!-- Botón de Google para Registro -->
+            <div id="g_id_onload"
+                 data-client_id="{{ google_client_id }}"
+                 data-callback="handleGoogleRegister">
+            </div>
+            
+            <div class="g_id_signin" 
+                 data-type="standard"
+                 data-size="large"
+                 data-theme="outline"
+                 data-text="signup_with"
+                 data-shape="rectangular"
+                 data-logo_alignment="left"
+                 data-width="100%">
+            </div>
+
             <div class="login-link">
                 <p>¿Ya tienes cuenta? <a href="login" class="login-text">¡Inicia sesión aquí!</a></p>
             </div>
             
         </form>
     </div>
+
+<!-- JavaScript para manejar registro con Google -->
+<script>
+/**
+ * Callback para REGISTRO con Google
+ * @param {Object} response - Respuesta de Google con el credential (JWT token)
+ */
+function handleGoogleRegister(response) {
+    // Obtener el idToken (JWT) de la respuesta
+    const idToken = response.credential;
+    
+    // Mostrar indicador de carga
+    const googleBtn = document.querySelector('.g_id_signin');
+    if (googleBtn) {
+        googleBtn.style.opacity = '0.5';
+        googleBtn.style.pointerEvents = 'none';
+    }
+    
+    // Enviar el token al endpoint de REGISTRO
+    fetch('/auth/google/register', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ idToken: idToken })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Registro exitoso - redirigir al perfil
+            console.log('✅ Registro con Google exitoso:', data.message);
+            window.location.href = '/mi_perfil';
+        } else {
+            // Error en el registro
+            console.error('❌ Error:', data.error);
+            alert('Error en el registro: ' + (data.error || 'Desconocido'));
+            
+            // Restaurar botón
+            if (googleBtn) {
+                googleBtn.style.opacity = '1';
+                googleBtn.style.pointerEvents = 'auto';
+            }
+        }
+    })
+    .catch(error => {
+        // Error de conexión
+        console.error('❌ Error de conexión:', error);
+        alert('Error de conexión. Por favor, intenta nuevamente.');
+        
+        // Restaurar botón
+        if (googleBtn) {
+            googleBtn.style.opacity = '1';
+            googleBtn.style.pointerEvents = 'auto';
+        }
+    });
+}
+</script>
+
 </body>
 </html>
