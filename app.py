@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, send_file
 from flask_bcrypt import Bcrypt
 import mysql.connector
 import uuid
@@ -9,6 +9,8 @@ import os
 from dotenv import load_dotenv
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
+import pandas as pd
+from io import BytesIO
 
 load_dotenv()
 
@@ -217,6 +219,42 @@ def mi_perfil():
 def logout():
     session.clear()
     return redirect(url_for('login'))
+
+# ---------------- DESCARGAR EXCEL ----------------
+@app.route('/descargar-excel')
+def descargar_excel():
+    """Descarga los datos de usuarios en formato Excel"""
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+    
+    try:
+        # Leer datos de la base de datos
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM users_new")
+        usuarios = cursor.fetchall()
+        cursor.close()
+        
+        # Convertir a DataFrame
+        df = pd.DataFrame(usuarios)
+        
+        # Crear archivo Excel en memoria
+        output = BytesIO()
+        df.to_excel(output, index=False, sheet_name="Usuarios")
+        output.seek(0)
+        
+        # Descargar archivo
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name=f"usuarios_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        )
+    
+    except Exception as e:
+        print(f"❌ Error al descargar Excel: {e}")
+        flash("Error al descargar el archivo")
+        return redirect(url_for('pagina_principal'))
+
 
 # ---------------- GOOGLE OAUTH 2.0 ----------------
 @app.route('/auth/google', methods=['POST'])
